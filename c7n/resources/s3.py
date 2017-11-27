@@ -2602,8 +2602,37 @@ class Lifecycle(BucketActionBase):
             Bucket=bucket['Name'], LifecycleConfiguration={'Rules': config})
 
 
+class KMSKeyResolverMixin(object):
+    """Builds a dictionary of region specific ARNs"""
+
+    arns = dict()
+
+    def resolve_keys(self, buckets):
+        if 'key' not in self.data:
+            return None
+
+        regions = {get_region(b) for b in buckets}
+        for r in regions:
+            try:
+                client = local_session(self.manager.session_factory).client('kms', region_name=r)
+                self.arns[r] = client.describe_key(
+                    KeyId=self.data.get('key')
+                ).get('KeyMetadata').get('Arn')
+            except ClientError as e:
+                self.log.error('Error validating ARNs for set-bucket-encryption: %s' % e)
+
+    def get_key(self, bucket):
+        if 'key' not in self.data:
+            return None
+        region = get_region(bucket)
+        key = self.arns.get(region)
+        if not key:
+            self.log.warning('Unable to resolve key %s for bucket %s', key, bucket.get('Name'))
+        return key
+
+
 @filters.register('bucket-encryption')
-class BucketEncryption(Filter):
+class BucketEncryption(KMSKeyResolverMixin, Filter):
     """Filters for S3 buckets that have bucket-encryption
 
     :example
@@ -2634,6 +2663,7 @@ class BucketEncryption(Filter):
     permissions = ('s3:GetBucketEncryption',)
 
     def process(self, buckets, event=None):
+        self.resolve_keys(buckets)
         results = []
         with self.executor_factory(max_workers=2) as w:
             futures = {w.submit(self.process_bucket, b): b for b in buckets}
@@ -2663,8 +2693,7 @@ class BucketEncryption(Filter):
                 return True
 
     def filter_bucket(self, b, sse):
-        if 'key' in self.data:
-            key = self.resolve_key(b)
+        key = self.get_key(b)
         crypto = self.data.get('crypto', 'AES256')
         rule = sse.get('ApplyServerSideEncryptionByDefault')
         algo = rule.get('SSEAlgorithm')
@@ -2674,15 +2703,9 @@ class BucketEncryption(Filter):
         elif crypto == 'aws:kms' and algo == 'aws:kms' and rule.get('KMSMasterKeyID') == key:
             return True
 
-    def resolve_key(self, b):
-        region = get_region(b)
-        key = self.data.get('key')
-        client = local_session(self.manager.session_factory).client('kms', region_name=region)
-        return client.describe_key(KeyId=key).get('KeyMetadata', {}).get('Arn')
-
 
 @actions.register('set-bucket-encryption')
-class SetBucketEncryption(BucketActionBase):
+class SetBucketEncryption(KMSKeyResolverMixin, BucketActionBase):
     """Action enables default encryption on S3 buckets
 
     `enabled`: boolean Optional: Defaults to True
@@ -2747,44 +2770,32 @@ class SetBucketEncryption(BucketActionBase):
                    'kms:ListAliases')
 
     def process(self, buckets):
-        keys = {}
-        regions = {get_region(b) for b in buckets}
-
-        key = self.data.get('key')
-
-        if self.data.get('enabled', True) and key:
-            keys = self.resolve_keys(regions, key)
+        if self.data.get('enabled', True):
+            self.resolve_keys(buckets)
 
         with self.executor_factory(max_workers=3) as w:
-            futures = {w.submit(self.process_bucket, b, keys): b for b in buckets}
+            futures = {w.submit(self.process_bucket, b): b for b in buckets}
             for future in as_completed(futures):
                 if future.exception():
                     self.log.error('Message: %s Bucket: %s', future.exception(),
                                    futures[future]['Name'])
 
-    def resolve_keys(self, regions, key):
-        arns = {}
-        for r in regions:
-            client = local_session(self.manager.session_factory).client('kms', region_name=r)
-            try:
-                arns[r] = client.describe_key(KeyId=key).get('KeyMetadata').get('Arn')
-            except ClientError as e:
-                self.log.error('Error validating ARNs for set-bucket-encryption: %s' % e)
-        return arns
-
-    def process_bucket(self, bucket, keys):
-        config = {'Rules': [
-            {'ApplyServerSideEncryptionByDefault': {
-                'SSEAlgorithm': self.data.get('crypto', 'AES256')}}
-        ]}
-        region = get_region(bucket)
-        if self.data.get('key') and region in keys:
-            (config['Rules'][0]['ApplyServerSideEncryptionByDefault']
-                ['KMSMasterKeyID']) = keys[region]
+    def process_bucket(self, bucket):
         s3 = bucket_client(local_session(self.manager.session_factory), bucket)
         if not self.data.get('enabled', True):
             s3.delete_bucket_encryption(Bucket=bucket['Name'])
             return
+        algo = self.data.get('crypto', 'AES256')
+        config = {'Rules': [
+            {'ApplyServerSideEncryptionByDefault': {
+                'SSEAlgorithm': algo}}
+        ]}
+        if algo == 'aws:kms':
+            key = self.get_key(bucket)
+            if not key:
+                raise Exception('Valid KMS Key required but does not exist')
+            (config['Rules'][0]['ApplyServerSideEncryptionByDefault']
+                ['KMSMasterKeyID']) = key
         s3.put_bucket_encryption(
             Bucket=bucket['Name'],
             ServerSideEncryptionConfiguration=config
