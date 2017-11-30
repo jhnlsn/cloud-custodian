@@ -2678,25 +2678,29 @@ class BucketEncryption(KMSKeyResolverMixin, Filter):
         return results
 
     def process_bucket(self, b):
+        rules = []
         try:
             client = bucket_client(local_session(self.manager.session_factory), b)
             be = client.get_bucket_encryption(Bucket=b['Name'])
             b['c7n:bucket-encryption'] = be
+            rules = be.get('ServerSideEncryptionConfiguration', []).get('Rules', [])
         except ClientError as e:
             if e.response['Error']['Code'] != 'ServerSideEncryptionConfigurationNotFoundError':
                 raise
-
-        rules = be.get('ServerSideEncryptionConfiguration', []).get('Rules', [])
 
         for sse in rules:
             if self.filter_bucket(b, sse):
                 return True
 
     def filter_bucket(self, b, sse):
+        allowed = ['AES256', 'aws:kms']
         key = self.get_key(b)
-        crypto = self.data.get('crypto', 'AES256')
+        crypto = self.data.get('crypto')
         rule = sse.get('ApplyServerSideEncryptionByDefault')
         algo = rule.get('SSEAlgorithm')
+
+        if not crypto and algo in allowed:
+            return True
 
         if crypto == 'AES256' and algo == 'AES256':
             return True
