@@ -228,7 +228,7 @@ def checksum(fh, hasher, blocksize=65536):
 
 def custodian_archive():
     """Create a lambda code archive for running custodian."""
-    return PythonPackageArchive('c7n', 'pkg_resources', 'ipaddress')
+    return PythonPackageArchive('c7n', 'pkg_resources', 'ipaddress', 'botocore')
 
 
 class LambdaManager(object):
