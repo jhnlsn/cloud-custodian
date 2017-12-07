@@ -226,9 +226,12 @@ def checksum(fh, hasher, blocksize=65536):
     return hasher.digest()
 
 
-def custodian_archive():
+def custodian_archive(*args):
     """Create a lambda code archive for running custodian."""
-    return PythonPackageArchive('c7n', 'pkg_resources', 'ipaddress', 'botocore')
+    modules = filter(None, ('c7n', 'pkg_resources', 'ipaddress') + args)
+    # remove duplicates
+    modules = tuple(set(modules))
+    return PythonPackageArchive(modules)
 
 
 class LambdaManager(object):
@@ -657,7 +660,7 @@ class PolicyLambda(AbstractLambdaFunction):
 
     def __init__(self, policy):
         self.policy = policy
-        self.archive = custodian_archive()
+        self.archive = custodian_archive(self.packages)
 
     @property
     def name(self):
@@ -711,6 +714,10 @@ class PolicyLambda(AbstractLambdaFunction):
     @property
     def tags(self):
         return self.policy.data['mode'].get('tags', {})
+
+    @property
+    def packages(self):
+        return tuple(self.policy.data['mode'].get('packages', ()))
 
     def get_events(self, session_factory):
         events = []
