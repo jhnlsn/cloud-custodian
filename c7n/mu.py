@@ -231,7 +231,7 @@ def custodian_archive(*args):
     modules = filter(None, ('c7n', 'pkg_resources', 'ipaddress') + args)
     # remove duplicates
     modules = tuple(set(modules))
-    return PythonPackageArchive(modules)
+    return PythonPackageArchive(*modules)
 
 
 class LambdaManager(object):
@@ -660,7 +660,7 @@ class PolicyLambda(AbstractLambdaFunction):
 
     def __init__(self, policy):
         self.policy = policy
-        self.archive = custodian_archive(self.packages)
+        self.archive = custodian_archive(*self.packages)
 
     @property
     def name(self):
