@@ -229,23 +229,23 @@ def checksum(fh, hasher, blocksize=65536):
 def custodian_archive(packages=None):
     """Create a lambda code archive for running custodian.
 
-    Lambda archive currently always includes c7n, pkg_resources and ipaddress. Add additional
+    Lambda archive currently always includes `c7n, pkg_resources and ipaddress`. Add additional
     packages in the mode block
 
-    :example:
+    Example policy that includes additional packages
 
-        .. code-block: yaml
+    .. code-block:: yaml
 
-            policy:
-              name: lambda-archive-example
-              resource: s3
-              mode:
-                - packages:
-                  - boto3
-                  - botocore
+        policy:
+          name: lambda-archive-example
+          resource: s3
+          mode:
+            - packages:
+              - boto3
+              - botocore
 
-    Args:
-        packages (set, optional): List of additional packages to include in the lambda archive.
+    Kwargs:
+        packages (set): List of additional packages to include in the lambda archive.
     """
     modules = {'c7n', 'pkg_resources', 'ipaddress'}
     if packages:
