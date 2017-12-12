@@ -232,15 +232,17 @@ def custodian_archive(packages=None):
     Lambda archive currently always includes c7n, pkg_resources and ipaddress. Add additional
     packages in the mode block
 
-    Exmaple:
+    :example:
 
-        policy:
-          name: lambda-archive-example
-          resource: s3
-          mode:
-            - packages:
-              - boto3
-              - botocore
+        .. code-block: yaml
+
+            policy:
+              name: lambda-archive-example
+              resource: s3
+              mode:
+                - packages:
+                  - boto3
+                  - botocore
 
     Args:
         packages (set, optional): List of additional packages to include in the lambda archive.
