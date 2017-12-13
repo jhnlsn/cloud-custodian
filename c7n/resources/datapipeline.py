@@ -173,6 +173,7 @@ class TagPipeline(Tag):
     :example:
 
     .. code-block:: yaml
+
             policies:
               - name: tag-pipeline
                 resource: datapipeline
@@ -209,6 +210,7 @@ class UntagPipeline(RemoveTag):
     :example:
 
     .. code-block:: yaml
+
             policies:
               - name: pipeline-remove-tag
                 resource: datapipeline
