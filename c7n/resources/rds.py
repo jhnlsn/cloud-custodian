@@ -687,11 +687,12 @@ class ResizeInstance(BaseAction):
 
     :example:
 
-       This will find databases using over 85% of their allocated
-       storage, and resize them to have an additional 30% storage
-       the resize here is async during the next maintenance.
+    This will find databases using over 85% of their allocated
+    storage, and resize them to have an additional 30% storage
+    the resize here is async during the next maintenance.
 
     .. code-block:: yaml
+
             policies:
               - name: rds-snapshot-retention
                 resource: rds
@@ -707,11 +708,12 @@ class ResizeInstance(BaseAction):
                     percent: 30
 
 
-       This will find databases using under 20% of their allocated
-       storage, and resize them to be 30% smaller, the resize here
-       is configured to be immediate.
+    This will find databases using under 20% of their allocated
+    storage, and resize them to be 30% smaller, the resize here
+    is configured to be immediate.
 
     .. code-block:: yaml
+
             policies:
               - name: rds-snapshot-retention
                 resource: rds

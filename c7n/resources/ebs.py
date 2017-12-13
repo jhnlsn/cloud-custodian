@@ -176,7 +176,8 @@ class SnapshotSkipAmiSnapshots(Filter):
 
     :example:
 
-        .. implicit with no parameters, 'true' by default
+    implicit with no parameters, 'true' by default
+
     .. code-block:: yaml
 
             policies:
@@ -190,7 +191,8 @@ class SnapshotSkipAmiSnapshots(Filter):
 
     :example:
 
-        .. explicit with parameter
+    explicit with parameter
+
     .. code-block:: yaml
 
             policies:
@@ -202,6 +204,7 @@ class SnapshotSkipAmiSnapshots(Filter):
                     op: ge
                   - type: skip-ami-snapshots
                     value: false
+
     """
 
     schema = type_schema('skip-ami-snapshots', value={'type': 'boolean'})
