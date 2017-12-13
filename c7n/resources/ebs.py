@@ -305,7 +305,7 @@ class CopySnapshot(BaseAction):
                 actions:
                   - type: copy
                     target_region: us-west-2
-                    target_key: *target_kms_key*
+                    target_key: target_kms_key
                     encrypted: true
     """
 
