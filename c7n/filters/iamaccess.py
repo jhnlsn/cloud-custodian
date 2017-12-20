@@ -132,6 +132,8 @@ class PolicyChecker(object):
             if not s['Principal']:
                 return False
 
+        assert len(s['Principal']) == 1, "Too many principals %s" % s
+
         if isinstance(s['Principal'], six.string_types):
             p = s['Principal']
         else:
@@ -180,14 +182,12 @@ class PolicyChecker(object):
             'NotIpAddress')
         set_conditions = ('ForAllValues', 'ForAnyValues')
 
-        assert len(s.get('Condition').keys()) == 1, "Multiple conditions present in iam statement"
         s_cond_op = list(s['Condition'].keys())[0]
 
         if s_cond_op not in conditions:
             if not any(s_cond_op.startswith(c) for c in set_conditions):
                 return None, None, None
 
-        assert len(s['Condition'][s_cond_op]) == 1, "Multiple keys on condition"
         s_cond_key = list(s['Condition'][s_cond_op].keys())[0]
 
         s_cond_value = s['Condition'][s_cond_op][s_cond_key]
