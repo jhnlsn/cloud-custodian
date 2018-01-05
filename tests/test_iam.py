@@ -784,3 +784,13 @@ class CrossAccountChecker(TestCase):
                            True, False, True]):
             violations = checker.check(p)
             self.assertEqual(bool(violations), expected)
+
+    def test_s3_policies_multiple_conditions(self):
+        policies = load_data('iam/s3-conditions.json')
+        checker = PolicyChecker({
+            'allowed_accounts': set(['123456789012']),
+            'allowed_vpc': set(['vpc-12345678'])})
+        for p, expected in zip(
+                policies, [False, True]):
+            violations = checker.check(p)
+            self.assertEqual(bool(violations), expected)
