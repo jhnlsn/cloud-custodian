@@ -203,8 +203,8 @@ class PolicyChecker(object):
             cond['key'] = list(s['Condition'][s_cond_op].keys())[0]
             cond['values'] = s['Condition'][s_cond_op][cond['key']]
             cond['values'] = (
-                isinstance(cond['values'], six.string_types) and (cond['values'],)
-                or cond['values'])
+                isinstance(cond['values'],
+                           six.string_types) and (cond['values'],) or cond['values'])
             cond['key'] = cond['key'].lower()
             s_cond.append(cond)
 
