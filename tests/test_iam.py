@@ -800,6 +800,6 @@ class CrossAccountChecker(TestCase):
         checker = PolicyChecker({
             'everyone_only': True})
         for p, expected in zip(
-                policies, [True, True, False, False, False]):
+                policies, [True, True, False, False, False, False]):
             violations = checker.check(p)
             self.assertEqual(bool(violations), expected)
