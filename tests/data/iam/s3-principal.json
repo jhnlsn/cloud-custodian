@@ -93,5 +93,31 @@
               }
           }
       ]
-    }
+    },
+  {
+    "Id": "AWSPrincipalAWSEveryoneOnly",
+    "Version": "2012-10-17",
+      "Statement": [
+          {
+              "Sid": "PutHotDog",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  "arn:aws:iam::1231231234:root",
+                  "arn:aws:iam::1122334455:root"
+                ]
+              },
+              "Action": "s3:GetObject",
+              "Resource": "arn:aws:s3:::hotdog/*",
+              "Condition": {
+                  "StringEquals": {
+                      "aws:sourceVpc": "vpc-1234564646"
+                  },
+                  "StringNotEquals": {
+                      "aws:sourceVpc": "vpc-1111111"
+                  }
+              }
+          }
+      ]
+  }
 ]
