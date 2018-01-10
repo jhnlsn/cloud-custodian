@@ -794,3 +794,12 @@ class CrossAccountChecker(TestCase):
                 policies, [False, True]):
             violations = checker.check(p)
             self.assertEqual(bool(violations), expected)
+
+    def test_s3_everyone_only(self):
+        policies = load_data('iam/s3-principal.json')
+        checker = PolicyChecker({
+            'everyone_only': True})
+        for p, expected in zip(
+                policies, [True, True, False, False, False]):
+            violations = checker.check(p)
+            self.assertEqual(bool(violations), expected)
