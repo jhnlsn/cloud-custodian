@@ -37,6 +37,7 @@ import fnmatch
 import json
 
 import six
+import logging
 
 from c7n.filters import Filter
 from c7n.resolver import ValuesFrom
@@ -52,6 +53,8 @@ def _account(arn):
 
 
 class PolicyChecker(object):
+
+    log = logging.getLogger('custodian.filters')
     """
     checker_config:
       - check_actions: only check one of the specified actions
@@ -173,7 +176,7 @@ class PolicyChecker(object):
         handler_name = "handle_%s" % c['key'].replace('-', '_').replace(':', '_')
         handler = getattr(self, handler_name, None)
         if handler is None:
-            print("no handler:%s op:%s key:%s values:%s" % (
+            self.log.warning("no handler:%s op:%s key:%s values:%s" % (
                 handler_name, c['op'], c['key'], c['values']))
             return
         return not handler(s, c)
